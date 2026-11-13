@@ -3,15 +3,17 @@ package org.example.model;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Cliente del restaurante, identificado por su documento. Guarda su historial de pedidos. */
 public class Cliente {
 
-    private String documento;
+    private String documento;           // identificador unico
     private String nombreCompleto;
     private String telefono;
     private String correo;
     private String direccion;
-    private List<Pedido> historialPedidos;
+    private List<Pedido> historialPedidos; // pedidos confirmados del cliente
 
+    /** Crea un cliente con el historial vacio. */
     public Cliente(String documento, String nombreCompleto, String telefono, String correo, String direccion) {
         this.documento = documento;
         this.nombreCompleto = nombreCompleto;
@@ -21,6 +23,7 @@ public class Cliente {
         this.historialPedidos = new ArrayList<>();
     }
 
+    /** Agrega un pedido al historial (el restaurante lo hace al confirmarlo). */
     public void agregarPedido(Pedido pedido) {
         historialPedidos.add(pedido);
     }

@@ -3,6 +3,11 @@ package org.example.model;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Clase principal del dominio: administra el menu, los clientes y los pedidos, y
+ * calcula las ventas. Las operaciones de registro y cambio de estado devuelven
+ * true/false segun hayan podido realizarse.
+ */
 public class Restaurante {
 
     private String nombre;
@@ -12,6 +17,7 @@ public class Restaurante {
     private List<Cliente> clientes;
     private List<Pedido> pedidos;
 
+    /** Crea un restaurante con menu, clientes y pedidos vacios. */
     public Restaurante(String nombre, String nit, String direccion) {
         this.nombre = nombre;
         this.nit = nit;
@@ -23,6 +29,7 @@ public class Restaurante {
 
     // ---------- Registro y estado ----------
 
+    /** Agrega el producto al menu; false si es null o ya existe el codigo. */
     public boolean registrarProducto(Producto producto) {
         if (producto == null || buscarProducto(producto.getCodigo()) != null) {
             return false;
@@ -31,6 +38,7 @@ public class Restaurante {
         return true;
     }
 
+    /** Registra el cliente; false si es null o ya existe el documento. */
     public boolean registrarCliente(Cliente cliente) {
         if (cliente == null || buscarCliente(cliente.getDocumento()) != null) {
             return false;
@@ -39,6 +47,10 @@ public class Restaurante {
         return true;
     }
 
+    /**
+     * Registra el pedido en estado PENDIENTE. Falla si es null, si el codigo ya existe
+     * o si su cliente no esta registrado en el restaurante.
+     */
     public boolean registrarPedido(Pedido pedido) {
         if (pedido == null || buscarPedido(pedido.getCodigo()) != null) {
             return false;
@@ -51,6 +63,10 @@ public class Restaurante {
         return true;
     }
 
+    /**
+     * Confirma el pedido si existe, todos sus productos pertenecen al menu y el propio
+     * pedido puede confirmarse. Al confirmar, lo agrega al historial del cliente.
+     */
     public boolean confirmarPedido(String codigo) {
         Pedido pedido = buscarPedido(codigo);
         if (pedido == null) {
@@ -68,11 +84,13 @@ public class Restaurante {
         return false;
     }
 
+    /** Marca como entregado un pedido confirmado; false si no existe o no esta CONFIRMADO. */
     public boolean marcarPedidoEntregado(String codigo) {
         Pedido pedido = buscarPedido(codigo);
         return pedido != null && pedido.marcarEntregado();
     }
 
+    /** Cancela un pedido PENDIENTE o CONFIRMADO; false si no existe o ya no se puede cancelar. */
     public boolean cancelarPedido(String codigo) {
         Pedido pedido = buscarPedido(codigo);
         return pedido != null && pedido.cancelar();
@@ -80,6 +98,7 @@ public class Restaurante {
 
     // ---------- Consultas ----------
 
+    /** @return total (productos + domicilio) del pedido; lanza IllegalArgumentException si no existe */
     public double calcularTotalPedido(String codigo) {
         Pedido pedido = buscarPedido(codigo);
         if (pedido == null) {
@@ -88,6 +107,7 @@ public class Restaurante {
         return pedido.calcularTotal();
     }
 
+    /** @return pedidos confirmados del cliente; lanza IllegalArgumentException si no existe */
     public List<Pedido> consultarHistorialCliente(String documento) {
         Cliente cliente = buscarCliente(documento);
         if (cliente == null) {
@@ -96,6 +116,7 @@ public class Restaurante {
         return cliente.getHistorialPedidos();
     }
 
+    /** @return productos del menu que cumplen los estandares de calidad */
     public List<Producto> consultarProductosDisponibles() {
         List<Producto> resultado = new ArrayList<>();
         for (Producto producto : productos) {
@@ -106,6 +127,7 @@ public class Restaurante {
         return resultado;
     }
 
+    /** @return productos del menu que NO cumplen los estandares de calidad */
     public List<Producto> consultarProductosNoAptos() {
         List<Producto> resultado = new ArrayList<>();
         for (Producto producto : productos) {
@@ -118,6 +140,7 @@ public class Restaurante {
 
     // ---------- Ventas ----------
 
+    /** @return ventas de productos de pedidos CONFIRMADOS o ENTREGADOS (sin domicilios) */
     public double calcularIngresosRestaurante() {
         double suma = 0;
         for (Pedido pedido : pedidos) {
@@ -128,6 +151,7 @@ public class Restaurante {
         return suma;
     }
 
+    /** @return suma de los costos de domicilio de pedidos CONFIRMADOS o ENTREGADOS */
     public double calcularIngresosDomicilios() {
         double suma = 0;
         for (Pedido pedido : pedidos) {
@@ -138,6 +162,7 @@ public class Restaurante {
         return suma;
     }
 
+    /** @return producto con mas unidades vendidas (en caso de empate, el primero registrado); null si no hay ventas */
     public Producto obtenerProductoMasVendido() {
         Producto masVendido = null;
         int maxUnidades = 0;
@@ -151,6 +176,7 @@ public class Restaurante {
         return masVendido;
     }
 
+    /** @return categoria con mayores ingresos por productos vendidos; null si no hay ventas */
     public Categoria obtenerCategoriaMayorIngresos() {
         Categoria mejor = null;
         double maxIngresos = 0;
@@ -166,6 +192,7 @@ public class Restaurante {
 
     // ---------- Busquedas ----------
 
+    /** @return el producto con ese codigo, o null si no existe */
     public Producto buscarProducto(String codigo) {
         for (Producto producto : productos) {
             if (producto.getCodigo().equals(codigo)) {
@@ -175,6 +202,7 @@ public class Restaurante {
         return null;
     }
 
+    /** @return el cliente con ese documento, o null si no existe */
     public Cliente buscarCliente(String documento) {
         for (Cliente cliente : clientes) {
             if (cliente.getDocumento().equals(documento)) {
@@ -184,6 +212,7 @@ public class Restaurante {
         return null;
     }
 
+    /** @return el pedido con ese codigo, o null si no existe */
     public Pedido buscarPedido(String codigo) {
         for (Pedido pedido : pedidos) {
             if (pedido.getCodigo().equals(codigo)) {
@@ -195,11 +224,13 @@ public class Restaurante {
 
     // ---------- Apoyo privado ----------
 
+    /** Un pedido cuenta para las ventas solo si esta CONFIRMADO o ENTREGADO. */
     private boolean esPedidoValido(Pedido pedido) {
         return pedido.getEstado() == EstadoPedido.CONFIRMADO
                 || pedido.getEstado() == EstadoPedido.ENTREGADO;
     }
 
+    /** Suma las unidades del producto en pedidos validos. */
     private int contarUnidadesVendidas(Producto producto) {
         int unidades = 0;
         for (Pedido pedido : pedidos) {
@@ -215,6 +246,7 @@ public class Restaurante {
         return unidades;
     }
 
+    /** Suma los subtotales de las lineas de esa categoria en pedidos validos. */
     private double calcularIngresosCategoria(Categoria categoria) {
         double suma = 0;
         for (Pedido pedido : pedidos) {

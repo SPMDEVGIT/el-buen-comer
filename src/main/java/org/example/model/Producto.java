@@ -1,14 +1,19 @@
 package org.example.model;
 
-// Clase base de los productos del menu
+/**
+ * Clase base de los productos del menu. Define los datos comunes y delega en las
+ * subclases (plato fuerte, bebida, postre) el precio de venta, el control de calidad
+ * y la categoria.
+ */
 public abstract class Producto {
 
-    private String codigo;
+    private String codigo;            // identificador unico dentro del restaurante
     private String nombre;
     private String descripcion;
-    private double precioBase;
-    private int tiempoPreparacion; // en minutos
+    private double precioBase;        // precio antes de recargos, en pesos
+    private int tiempoPreparacion;    // en minutos
 
+    /** Crea un producto con los datos comunes a todas las categorias. */
     public Producto(String codigo, String nombre, String descripcion, double precioBase, int tiempoPreparacion) {
         this.codigo = codigo;
         this.nombre = nombre;
@@ -17,10 +22,13 @@ public abstract class Producto {
         this.tiempoPreparacion = tiempoPreparacion;
     }
 
+    /** @return precio final al cliente: precio base mas los recargos propios de la categoria */
     public abstract double calcularPrecioVenta();
 
+    /** @return true si el producto cumple los estandares de calidad de su categoria */
     public abstract boolean cumpleCalidad();
 
+    /** @return categoria del producto (se usa para agrupar ingresos) */
     public abstract Categoria getCategoria();
 
     public String getCodigo() {

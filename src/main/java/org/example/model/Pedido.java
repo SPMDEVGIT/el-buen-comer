@@ -4,18 +4,22 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Pedido de un cliente: lista de productos, modalidad de entrega y estado.
+ * Calcula sus totales y controla las transiciones de estado permitidas.
+ */
 public class Pedido {
 
-    private String codigo;
+    private String codigo;                  // identificador unico
     private LocalDate fecha;
     private Cliente cliente;
     private ModalidadEntrega modalidad;
     private EstadoPedido estado;
     private List<DetallePedido> detalles;
-    private EmpresaDomicilio empresaDomicilio;
-    private double distanciaKm;
+    private EmpresaDomicilio empresaDomicilio; // solo en pedidos a domicilio
+    private double distanciaKm;                // solo en pedidos a domicilio
 
-    // Pedido para consumo en el restaurante
+    /** Pedido para consumo en el restaurante: modalidad RESTAURANTE, estado PENDIENTE, sin domicilio. */
     public Pedido(String codigo, LocalDate fecha, Cliente cliente) {
         this.codigo = codigo;
         this.fecha = fecha;
@@ -25,7 +29,7 @@ public class Pedido {
         this.detalles = new ArrayList<>();
     }
 
-    // Pedido a domicilio
+    /** Pedido a domicilio: igual al anterior pero con modalidad DOMICILIO, empresa y distancia en km. */
     public Pedido(String codigo, LocalDate fecha, Cliente cliente,
                   EmpresaDomicilio empresaDomicilio, double distanciaKm) {
         this(codigo, fecha, cliente);
@@ -34,10 +38,12 @@ public class Pedido {
         this.distanciaKm = distanciaKm;
     }
 
+    /** Agrega una linea al pedido; lanza IllegalArgumentException si el producto es null o la cantidad no es positiva. */
     public void agregarDetalle(Producto producto, int cantidad) {
         detalles.add(new DetallePedido(producto, cantidad));
     }
 
+    /** @return suma de los subtotales de todas las lineas (sin domicilio) */
     public double calcularSubtotalProductos() {
         double suma = 0;
         for (DetallePedido detalle : detalles) {
@@ -46,6 +52,7 @@ public class Pedido {
         return suma;
     }
 
+    /** @return tarifa de la empresa para la distancia del pedido, o 0 si no es a domicilio */
     public double calcularCostoDomicilio() {
         if (modalidad == ModalidadEntrega.DOMICILIO && empresaDomicilio != null) {
             return empresaDomicilio.calcularTarifa(distanciaKm);
@@ -53,10 +60,15 @@ public class Pedido {
         return 0;
     }
 
+    /** @return subtotal de productos mas costo de domicilio */
     public double calcularTotal() {
         return calcularSubtotalProductos() + calcularCostoDomicilio();
     }
 
+    /**
+     * Un pedido puede confirmarse si esta PENDIENTE, tiene al menos un producto, todos
+     * sus productos cumplen calidad y, si es a domicilio, la empresa acepta la distancia.
+     */
     public boolean puedeConfirmarse() {
         if (estado != EstadoPedido.PENDIENTE || detalles.isEmpty()) {
             return false;
@@ -72,6 +84,7 @@ public class Pedido {
         return true;
     }
 
+    /** PENDIENTE -> CONFIRMADO si {@link #puedeConfirmarse()}; @return true si cambio de estado */
     public boolean confirmar() {
         if (puedeConfirmarse()) {
             estado = EstadoPedido.CONFIRMADO;
@@ -80,6 +93,7 @@ public class Pedido {
         return false;
     }
 
+    /** CONFIRMADO -> ENTREGADO; @return false si el pedido no estaba CONFIRMADO */
     public boolean marcarEntregado() {
         if (estado == EstadoPedido.CONFIRMADO) {
             estado = EstadoPedido.ENTREGADO;
@@ -88,6 +102,7 @@ public class Pedido {
         return false;
     }
 
+    /** PENDIENTE o CONFIRMADO -> CANCELADO; @return false si ya estaba entregado o cancelado */
     public boolean cancelar() {
         if (estado == EstadoPedido.PENDIENTE || estado == EstadoPedido.CONFIRMADO) {
             estado = EstadoPedido.CANCELADO;
